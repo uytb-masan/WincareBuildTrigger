@@ -101,8 +101,13 @@ class BuildTriggerController extends GetxController {
 
     try {
       final inputs = <String, String>{};
-      if (flavorConfig.supportsInputs && releaseNotes.value.isNotEmpty) {
-        inputs['release_notes'] = releaseNotes.value;
+      if (flavorConfig.supportsInputs) {
+        if (releaseNotes.value.isNotEmpty) {
+          inputs['release_notes'] = releaseNotes.value;
+        }
+        if (flavorConfig.testerGroups != null) {
+          inputs['tester_groups'] = flavorConfig.testerGroups!;
+        }
       }
 
       await _apiService.triggerWorkflow(

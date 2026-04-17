@@ -10,6 +10,7 @@ class AppConfig {
       description: 'Development build → Firebase Distribution',
       colorHex: 0xFF4CAF50,
       icon: '🟢',
+      testerGroups: 'dev-testers',
     ),
     'uat': FlavorConfig(
       name: 'UAT',
@@ -17,6 +18,7 @@ class AppConfig {
       description: 'UAT build → Firebase Distribution',
       colorHex: 0xFFFFC107,
       icon: '🟡',
+      testerGroups: 'uat-testers',
     ),
     'production': FlavorConfig(
       name: 'PRODUCTION',
@@ -39,6 +41,7 @@ class FlavorConfig {
   final int colorHex;
   final String icon;
   final bool supportsInputs;
+  final String? testerGroups;
 
   const FlavorConfig({
     required this.name,
@@ -47,5 +50,6 @@ class FlavorConfig {
     required this.colorHex,
     required this.icon,
     this.supportsInputs = true,
+    this.testerGroups,
   });
 }
