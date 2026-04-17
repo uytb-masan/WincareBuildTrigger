@@ -10,7 +10,7 @@ class AppConfig {
       description: 'Development build → Firebase Distribution',
       colorHex: 0xFF4CAF50,
       icon: '🟢',
-      testerGroups: 'dev-testers',
+      testerGroups: 'tcx-internal',
     ),
     'uat': FlavorConfig(
       name: 'UAT',
@@ -18,7 +18,7 @@ class AppConfig {
       description: 'UAT build → Firebase Distribution',
       colorHex: 0xFFFFC107,
       icon: '🟡',
-      testerGroups: 'uat-testers',
+      testerGroups: 'tcx-internal',
     ),
     'production': FlavorConfig(
       name: 'PRODUCTION',
