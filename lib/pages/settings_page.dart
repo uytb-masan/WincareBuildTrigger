@@ -217,7 +217,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Wincare Build Trigger',
+                          'WincaBuilder',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,

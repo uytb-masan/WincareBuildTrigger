@@ -13,7 +13,7 @@ class WincareBuildApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Wincare Build Trigger',
+      title: 'WincaBuilder',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       initialBinding: AppBindings(),

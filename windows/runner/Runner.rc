@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.tcx.wcm" "\0"
-            VALUE "FileDescription", "wincare_build_trigger" "\0"
+            VALUE "FileDescription", "WincaBuilder" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wincare_build_trigger" "\0"
+            VALUE "InternalName", "WincaBuilder" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.tcx.wcm. All rights reserved." "\0"
-            VALUE "OriginalFilename", "wincare_build_trigger.exe" "\0"
-            VALUE "ProductName", "wincare_build_trigger" "\0"
+            VALUE "OriginalFilename", "WincaBuilder.exe" "\0"
+            VALUE "ProductName", "WincaBuilder" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
