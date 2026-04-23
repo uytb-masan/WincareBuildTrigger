@@ -234,7 +234,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'A desktop app to trigger GitHub Actions workflows for Wincare Android builds and monitor their status in real-time.',
+                          'A desktop app to trigger GitHub Actions workflows for Wincare Android (Firebase) and iOS (TestFlight) builds, and monitor their status in real-time.',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppTheme.textSecondary,

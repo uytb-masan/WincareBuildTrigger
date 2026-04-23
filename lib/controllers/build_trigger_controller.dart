@@ -6,6 +6,7 @@ import '../data/models/branch_model.dart';
 class BuildTriggerController extends GetxController {
   final _apiService = GitHubApiService();
 
+  final selectedPlatform = BuildPlatform.android.obs;
   final branches = <BranchModel>[].obs;
   final filteredBranches = <BranchModel>[].obs;
   final selectedBranch = Rxn<String>();
@@ -18,6 +19,16 @@ class BuildTriggerController extends GetxController {
   final triggerSuccess = false.obs;
   final triggerError = ''.obs;
 
+  /// Returns the flavor configs for the currently selected platform
+  Map<String, FlavorConfig> get currentFlavors =>
+      AppConfig.flavorsFor(selectedPlatform.value);
+
+  /// Returns the repo owner for the currently selected platform
+  String get currentRepoOwner => selectedPlatform.value.repoOwner;
+
+  /// Returns the repo name for the currently selected platform
+  String get currentRepoName => selectedPlatform.value.repoName;
+
   @override
   void onInit() {
     super.onInit();
@@ -27,10 +38,25 @@ class BuildTriggerController extends GetxController {
     ever(branchSearchQuery, (_) => _filterBranches());
   }
 
+  /// Switch platform (Android / iOS) and reload branches + reset selection
+  void switchPlatform(BuildPlatform platform) {
+    if (selectedPlatform.value == platform) return;
+
+    selectedPlatform.value = platform;
+    selectedBranch.value = null;
+    selectedFlavor.value = null;
+    releaseNotes.value = '';
+    branchSearchQuery.value = '';
+    fetchBranches();
+  }
+
   Future<void> fetchBranches() async {
     isLoadingBranches.value = true;
     try {
-      final result = await _apiService.listBranches();
+      final result = await _apiService.listBranches(
+        repoOwner: currentRepoOwner,
+        repoName: currentRepoName,
+      );
       branches.value = result;
       _filterBranches();
 
@@ -88,7 +114,7 @@ class BuildTriggerController extends GetxController {
 
     final flavor = selectedFlavor.value!;
     final branch = selectedBranch.value!;
-    final flavorConfig = AppConfig.flavors[flavor];
+    final flavorConfig = currentFlavors[flavor];
 
     if (flavorConfig == null) {
       triggerError.value = 'Unknown flavor: $flavor';
@@ -111,15 +137,18 @@ class BuildTriggerController extends GetxController {
       }
 
       await _apiService.triggerWorkflow(
+        repoOwner: currentRepoOwner,
+        repoName: currentRepoName,
         workflowFile: flavorConfig.workflowFile,
         ref: branch,
         inputs: flavorConfig.supportsInputs ? inputs : const {},
       );
 
       triggerSuccess.value = true;
+      final platformLabel = selectedPlatform.value.label;
       Get.snackbar(
         '🚀 Build Triggered!',
-        '${flavorConfig.name} build on $branch',
+        '$platformLabel ${flavorConfig.name} build on $branch',
         snackPosition: SnackPosition.BOTTOM,
         duration: const Duration(seconds: 3),
       );

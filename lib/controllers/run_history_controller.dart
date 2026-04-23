@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../config/app_config.dart';
 import '../data/github_api_service.dart';
 import '../data/models/workflow_run_model.dart';
+import 'build_trigger_controller.dart';
 
 class RunHistoryController extends GetxController {
   final _apiService = GitHubApiService();
@@ -18,6 +19,15 @@ class RunHistoryController extends GetxController {
     super.onInit();
     fetchRuns();
     _startPolling();
+
+    // Listen for platform changes from BuildTriggerController
+    if (Get.isRegistered<BuildTriggerController>()) {
+      final buildController = Get.find<BuildTriggerController>();
+      ever(buildController.selectedPlatform, (_) {
+        selectedFilter.value = 'all';
+        fetchRuns();
+      });
+    }
   }
 
   @override
@@ -33,11 +43,23 @@ class RunHistoryController extends GetxController {
     );
   }
 
+  /// Get the current platform from BuildTriggerController
+  BuildPlatform get _currentPlatform {
+    if (Get.isRegistered<BuildTriggerController>()) {
+      return Get.find<BuildTriggerController>().selectedPlatform.value;
+    }
+    return BuildPlatform.android;
+  }
+
   Future<void> fetchRuns() async {
     if (!_apiService.isConfigured) return;
 
+    final platform = _currentPlatform;
+
     try {
       final result = await _apiService.listWorkflowRuns(
+        repoOwner: platform.repoOwner,
+        repoName: platform.repoName,
         perPage: AppConfig.maxRecentRuns,
       );
       runs.value = result;
@@ -46,10 +68,14 @@ class RunHistoryController extends GetxController {
     }
   }
 
+  /// Returns the flavor configs for the current platform
+  Map<String, FlavorConfig> get _currentFlavors =>
+      AppConfig.flavorsFor(_currentPlatform);
+
   List<WorkflowRunModel> get filteredRuns {
     if (selectedFilter.value == 'all') return runs;
 
-    final flavorConfig = AppConfig.flavors[selectedFilter.value];
+    final flavorConfig = _currentFlavors[selectedFilter.value];
     if (flavorConfig == null) return runs;
 
     // Match by workflow name

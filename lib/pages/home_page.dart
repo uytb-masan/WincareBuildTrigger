@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../app/theme.dart';
-import '../config/app_config.dart';
 import '../controllers/build_trigger_controller.dart';
 import '../controllers/run_history_controller.dart';
 import '../controllers/settings_controller.dart';
 import 'widgets/branch_dropdown.dart';
 import 'widgets/flavor_card.dart';
+import 'widgets/platform_toggle.dart';
 import 'widgets/trigger_button.dart';
 import 'widgets/run_status_card.dart';
 
@@ -145,25 +145,27 @@ class _BuildTriggerPanel extends StatelessWidget {
                 const Icon(Icons.build_circle_rounded,
                     color: AppTheme.primary, size: 28),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Trigger Build',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Trigger Build',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${AppConfig.repoOwner}/${AppConfig.repoName}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textMuted,
-                      ),
-                    ),
-                  ],
+                      Obx(() => Text(
+                            '${controller.currentRepoOwner}/${controller.currentRepoName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                          )),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -176,6 +178,33 @@ class _BuildTriggerPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Platform toggle
+                  Row(
+                    children: [
+                      const Icon(Icons.devices_rounded,
+                          size: 18, color: AppTheme.accent),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Platform',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall
+                            ?.copyWith(
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Obx(() => PlatformToggle(
+                        selected: controller.selectedPlatform.value,
+                        onChanged: controller.switchPlatform,
+                      )),
+
+                  const SizedBox(height: 28),
+
                   // Branch selector
                   const BranchDropdown(),
 
@@ -204,7 +233,8 @@ class _BuildTriggerPanel extends StatelessWidget {
                   Obx(() => Wrap(
                         spacing: 12,
                         runSpacing: 12,
-                        children: AppConfig.flavors.entries.map((entry) {
+                        children:
+                            controller.currentFlavors.entries.map((entry) {
                           return SizedBox(
                             width: 220,
                             child: FlavorCard(
@@ -273,6 +303,7 @@ class _RunHistoryPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<RunHistoryController>();
+    final buildController = Get.find<BuildTriggerController>();
 
     return Container(
       color: AppTheme.background,
@@ -293,14 +324,26 @@ class _RunHistoryPanel extends StatelessWidget {
                 const Icon(Icons.history_rounded,
                     color: AppTheme.accent, size: 28),
                 const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Recent Runs',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary,
-                    ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Recent Runs',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Obx(() => Text(
+                            '${buildController.selectedPlatform.value.icon} ${buildController.selectedPlatform.value.label}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textMuted,
+                            ),
+                          )),
+                    ],
                   ),
                 ),
                 // Running builds indicator
@@ -355,23 +398,26 @@ class _RunHistoryPanel extends StatelessWidget {
           // Filter chips
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            child: Obx(() => Wrap(
-                  spacing: 8,
-                  children: [
-                    _FilterChip(
-                      label: 'All',
-                      isSelected: controller.selectedFilter.value == 'all',
-                      onTap: () => controller.setFilter('all'),
-                    ),
-                    ...AppConfig.flavors.entries.map((entry) => _FilterChip(
-                          label: entry.value.name,
-                          color: Color(entry.value.colorHex),
-                          isSelected:
-                              controller.selectedFilter.value == entry.key,
-                          onTap: () => controller.setFilter(entry.key),
-                        )),
-                  ],
-                )),
+            child: Obx(() {
+              final currentFlavors = buildController.currentFlavors;
+              return Wrap(
+                spacing: 8,
+                children: [
+                  _FilterChip(
+                    label: 'All',
+                    isSelected: controller.selectedFilter.value == 'all',
+                    onTap: () => controller.setFilter('all'),
+                  ),
+                  ...currentFlavors.entries.map((entry) => _FilterChip(
+                        label: entry.value.name,
+                        color: Color(entry.value.colorHex),
+                        isSelected:
+                            controller.selectedFilter.value == entry.key,
+                        onTap: () => controller.setFilter(entry.key),
+                      )),
+                ],
+              );
+            }),
           ),
 
           // Runs list

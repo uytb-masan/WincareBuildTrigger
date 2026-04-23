@@ -34,13 +34,17 @@ class GitHubApiService {
   }
 
   /// List all branches for the repository
-  Future<List<BranchModel>> listBranches({int perPage = 100}) async {
+  Future<List<BranchModel>> listBranches({
+    required String repoOwner,
+    required String repoName,
+    int perPage = 100,
+  }) async {
     final List<BranchModel> allBranches = [];
     int page = 1;
 
     while (true) {
       final response = await _dio.get(
-        '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/branches',
+        '/repos/$repoOwner/$repoName/branches',
         queryParameters: {'per_page': perPage, 'page': page},
       );
 
@@ -59,9 +63,12 @@ class GitHubApiService {
   }
 
   /// List all workflows for the repository
-  Future<List<WorkflowModel>> listWorkflows() async {
+  Future<List<WorkflowModel>> listWorkflows({
+    required String repoOwner,
+    required String repoName,
+  }) async {
     final response = await _dio.get(
-      '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/workflows',
+      '/repos/$repoOwner/$repoName/actions/workflows',
     );
 
     final List<dynamic> workflows =
@@ -74,13 +81,15 @@ class GitHubApiService {
 
   /// Trigger a workflow dispatch event
   Future<bool> triggerWorkflow({
+    required String repoOwner,
+    required String repoName,
     required String workflowFile,
     required String ref,
     Map<String, String> inputs = const {},
   }) async {
     try {
       await _dio.post(
-        '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/workflows/$workflowFile/dispatches',
+        '/repos/$repoOwner/$repoName/actions/workflows/$workflowFile/dispatches',
         data: {
           'ref': ref,
           'inputs': inputs,
@@ -95,6 +104,8 @@ class GitHubApiService {
 
   /// List recent workflow runs, optionally filtered by workflow ID
   Future<List<WorkflowRunModel>> listWorkflowRuns({
+    required String repoOwner,
+    required String repoName,
     int? workflowId,
     String? branch,
     String? status,
@@ -103,10 +114,10 @@ class GitHubApiService {
     final String path;
     if (workflowId != null) {
       path =
-          '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/workflows/$workflowId/runs';
+          '/repos/$repoOwner/$repoName/actions/workflows/$workflowId/runs';
     } else {
       path =
-          '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/runs';
+          '/repos/$repoOwner/$repoName/actions/runs';
     }
 
     final queryParams = <String, dynamic>{'per_page': perPage};
@@ -126,18 +137,26 @@ class GitHubApiService {
   }
 
   /// Get a specific workflow run
-  Future<WorkflowRunModel> getWorkflowRun(int runId) async {
+  Future<WorkflowRunModel> getWorkflowRun({
+    required String repoOwner,
+    required String repoName,
+    required int runId,
+  }) async {
     final response = await _dio.get(
-      '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/runs/$runId',
+      '/repos/$repoOwner/$repoName/actions/runs/$runId',
     );
 
     return WorkflowRunModel.fromJson(response.data as Map<String, dynamic>);
   }
 
   /// List artifacts for a workflow run
-  Future<List<Map<String, dynamic>>> listRunArtifacts(int runId) async {
+  Future<List<Map<String, dynamic>>> listRunArtifacts({
+    required String repoOwner,
+    required String repoName,
+    required int runId,
+  }) async {
     final response = await _dio.get(
-      '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/runs/$runId/artifacts',
+      '/repos/$repoOwner/$repoName/actions/runs/$runId/artifacts',
     );
 
     return ((response.data as Map<String, dynamic>)['artifacts'] as List<dynamic>)
@@ -145,9 +164,13 @@ class GitHubApiService {
   }
 
   /// Get download URL for an artifact
-  Future<String> getArtifactDownloadUrl(int artifactId) async {
+  Future<String> getArtifactDownloadUrl({
+    required String repoOwner,
+    required String repoName,
+    required int artifactId,
+  }) async {
     final response = await _dio.get(
-      '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/artifacts/$artifactId/zip',
+      '/repos/$repoOwner/$repoName/actions/artifacts/$artifactId/zip',
       options: Options(
         followRedirects: false,
         validateStatus: (status) => status == 302,
@@ -158,9 +181,13 @@ class GitHubApiService {
   }
 
   /// Get workflow run logs URL
-  Future<String> getRunLogsUrl(int runId) async {
+  Future<String> getRunLogsUrl({
+    required String repoOwner,
+    required String repoName,
+    required int runId,
+  }) async {
     final response = await _dio.get(
-      '/repos/${AppConfig.repoOwner}/${AppConfig.repoName}/actions/runs/$runId/logs',
+      '/repos/$repoOwner/$repoName/actions/runs/$runId/logs',
       options: Options(
         followRedirects: false,
         validateStatus: (status) => status == 302,

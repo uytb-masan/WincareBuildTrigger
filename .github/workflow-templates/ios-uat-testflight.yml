@@ -1,0 +1,92 @@
+# ============================================================
+# iOS UAT → TestFlight
+# ============================================================
+# This workflow builds the UAT variant of the iOS app and
+# uploads it to TestFlight for QA / UAT testing.
+#
+# Required GitHub Secrets: (same as ios-dev-testflight.yml)
+#   - APPLE_CERTIFICATE_BASE64
+#   - APPLE_CERTIFICATE_PASSWORD
+#   - APPLE_PROVISIONING_PROFILE_UAT
+#   - APP_STORE_CONNECT_API_KEY
+#   - APP_STORE_CONNECT_KEY_ID
+#   - APP_STORE_CONNECT_ISSUER_ID
+# ============================================================
+
+name: iOS UAT → TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Release notes for TestFlight testers'
+        required: false
+        default: 'UAT build'
+
+jobs:
+  build-and-upload:
+    name: Build & Upload to TestFlight
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Apple Certificate & Provisioning Profile
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_UAT }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          PP_PATH=$HOME/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p "$PP_PATH"
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode \
+            -o "$PP_PATH/uat_profile.mobileprovision"
+
+      # TODO: Build with UAT scheme/configuration
+      # - name: Build Archive
+      #   run: |
+      #     xcodebuild archive \
+      #       -workspace YourApp.xcworkspace \
+      #       -scheme "YourApp-UAT" \
+      #       -configuration "Release-UAT" \
+      #       -archivePath $RUNNER_TEMP/YourApp.xcarchive \
+      #       -allowProvisioningUpdates
+
+      # - name: Export IPA
+      #   run: |
+      #     xcodebuild -exportArchive \
+      #       -archivePath $RUNNER_TEMP/YourApp.xcarchive \
+      #       -exportPath $RUNNER_TEMP/export \
+      #       -exportOptionsPlist ExportOptions-UAT.plist
+
+      # - name: Upload to TestFlight
+      #   env:
+      #     KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      #     ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      #   run: |
+      #     xcrun altool --upload-app \
+      #       --type ios \
+      #       --file $RUNNER_TEMP/export/YourApp.ipa \
+      #       --apiKey "$KEY_ID" \
+      #       --apiIssuer "$ISSUER_ID"
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true

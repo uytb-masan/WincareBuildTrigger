@@ -1,0 +1,102 @@
+# ============================================================
+# iOS DEV → TestFlight
+# ============================================================
+# This workflow builds the DEV variant of the iOS app and
+# uploads it to TestFlight for internal testing.
+#
+# Required GitHub Secrets:
+#   - APPLE_CERTIFICATE_BASE64    : Base64-encoded .p12 distribution certificate
+#   - APPLE_CERTIFICATE_PASSWORD  : Password for the .p12 certificate
+#   - APPLE_PROVISIONING_PROFILE  : Base64-encoded provisioning profile
+#   - APP_STORE_CONNECT_API_KEY   : App Store Connect API key (JSON or .p8)
+#   - APP_STORE_CONNECT_KEY_ID    : Key ID from App Store Connect
+#   - APP_STORE_CONNECT_ISSUER_ID : Issuer ID from App Store Connect
+# ============================================================
+
+name: iOS DEV → TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Release notes for TestFlight testers'
+        required: false
+        default: 'Dev build'
+
+jobs:
+  build-and-upload:
+    name: Build & Upload to TestFlight
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Code Signing Setup ---
+      - name: Install Apple Certificate & Provisioning Profile
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security import "$CERTIFICATE_PATH" -P "$CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          # Install provisioning profile
+          PP_PATH=$HOME/Library/MobileDevice/Provisioning\ Profiles
+          mkdir -p "$PP_PATH"
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode \
+            -o "$PP_PATH/dev_profile.mobileprovision"
+
+      # --- Build ---
+      # TODO: Uncomment and adjust for your project type (Xcode / Flutter / React Native)
+      #
+      # For a native Xcode project:
+      # - name: Build Archive
+      #   run: |
+      #     xcodebuild archive \
+      #       -workspace YourApp.xcworkspace \
+      #       -scheme "YourApp-Dev" \
+      #       -configuration "Release-Dev" \
+      #       -archivePath $RUNNER_TEMP/YourApp.xcarchive \
+      #       -allowProvisioningUpdates
+      #
+      # - name: Export IPA
+      #   run: |
+      #     xcodebuild -exportArchive \
+      #       -archivePath $RUNNER_TEMP/YourApp.xcarchive \
+      #       -exportPath $RUNNER_TEMP/export \
+      #       -exportOptionsPlist ExportOptions-Dev.plist
+
+      # --- Upload to TestFlight ---
+      # - name: Upload to TestFlight
+      #   env:
+      #     API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+      #     KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      #     ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      #   run: |
+      #     xcrun altool --upload-app \
+      #       --type ios \
+      #       --file $RUNNER_TEMP/export/YourApp.ipa \
+      #       --apiKey "$KEY_ID" \
+      #       --apiIssuer "$ISSUER_ID"
+
+      # --- Cleanup ---
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
