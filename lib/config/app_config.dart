@@ -48,11 +48,11 @@ class AppConfig {
     ),
     'production': FlavorConfig(
       name: 'PRODUCTION',
-      workflowFile: 'dev-build.yml',
-      description: 'Production build → Confluence',
+      workflowFile: 'prd-firebase.yml',
+      description: 'Production build → Firebase Distribution',
       colorHex: 0xFFF44336,
       icon: '🔴',
-      supportsInputs: false,
+      testerGroups: 'tcx-internal',
     ),
   };
 

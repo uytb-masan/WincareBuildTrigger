@@ -236,7 +236,7 @@ class _BuildTriggerPanel extends StatelessWidget {
                         children:
                             controller.currentFlavors.entries.map((entry) {
                           return SizedBox(
-                            width: 220,
+                            width: 225,
                             child: FlavorCard(
                               flavorKey: entry.key,
                               config: entry.value,
