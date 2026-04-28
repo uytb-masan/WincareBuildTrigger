@@ -14,7 +14,7 @@ void main() async {
     center: true,
     backgroundColor: Color(0xFF141422),
     titleBarStyle: TitleBarStyle.normal,
-    title: 'WincaBuilder',
+    title: 'WincareBuilder',
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
