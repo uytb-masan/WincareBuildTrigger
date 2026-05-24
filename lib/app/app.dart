@@ -48,98 +48,196 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     return Scaffold(
-      body: Row(
-        children: [
-          // Side navigation rail
-          Container(
-            width: 72,
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              border: Border(
-                right: BorderSide(
-                  color: AppTheme.cardBorder,
-                  width: 1,
-                ),
+      body: isMobile
+          ? SafeArea(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _pages[_selectedIndex],
               ),
-            ),
-            child: Column(
+            )
+          : Row(
               children: [
-                const SizedBox(height: 20),
-                // App icon
+                // Side navigation rail
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 72,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.primary, AppTheme.accent],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.rocket_launch_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                // Nav items
-                _NavItem(
-                  icon: Icons.dashboard_rounded,
-                  label: 'Build',
-                  isSelected: _selectedIndex == 0,
-                  onTap: () => setState(() => _selectedIndex = 0),
-                ),
-                const SizedBox(height: 8),
-                _NavItem(
-                  icon: Icons.settings_rounded,
-                  label: 'Settings',
-                  isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
-                ),
-                const Spacer(),
-                // Connection status
-                Obx(() {
-                  final settings = Get.find<SettingsController>();
-                  return Tooltip(
-                    message: settings.isValid.value
-                        ? 'Connected as ${settings.userName.value}'
-                        : 'Not connected',
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: settings.isValid.value
-                            ? AppTheme.success
-                            : AppTheme.error,
-                        boxShadow: [
-                          BoxShadow(
-                            color: (settings.isValid.value
-                                    ? AppTheme.success
-                                    : AppTheme.error)
-                                .withOpacity(0.5),
-                            blurRadius: 8,
-                          ),
-                        ],
+                    color: AppTheme.surface,
+                    border: Border(
+                      right: BorderSide(
+                        color: AppTheme.cardBorder,
+                        width: 1,
                       ),
                     ),
-                  );
-                }),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      // App icon
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.primary, AppTheme.accent],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.rocket_launch_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      // Nav items
+                      _NavItem(
+                        icon: Icons.dashboard_rounded,
+                        label: 'Build',
+                        isSelected: _selectedIndex == 0,
+                        onTap: () => setState(() => _selectedIndex = 0),
+                      ),
+                      const SizedBox(height: 8),
+                      _NavItem(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                        isSelected: _selectedIndex == 1,
+                        onTap: () => setState(() => _selectedIndex = 1),
+                      ),
+                      const Spacer(),
+                      // Connection status
+                      Obx(() {
+                        final settings = Get.find<SettingsController>();
+                        return Tooltip(
+                          message: settings.isValid.value
+                              ? 'Connected as ${settings.userName.value}'
+                              : 'Not connected',
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: settings.isValid.value
+                                  ? AppTheme.success
+                                  : AppTheme.error,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (settings.isValid.value
+                                          ? AppTheme.success
+                                          : AppTheme.error)
+                                      .withOpacity(0.5),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+                // Main content
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: _pages[_selectedIndex],
+                  ),
+                ),
               ],
             ),
-          ),
-          // Main content
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _pages[_selectedIndex],
+      bottomNavigationBar: isMobile
+          ? Container(
+              decoration: const BoxDecoration(
+                color: AppTheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: AppTheme.cardBorder,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _MobileNavItem(
+                        icon: Icons.dashboard_rounded,
+                        label: 'Build',
+                        isSelected: _selectedIndex == 0,
+                        onTap: () => setState(() => _selectedIndex == 0 ? null : _selectedIndex = 0),
+                      ),
+                      _MobileNavItem(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                        isSelected: _selectedIndex == 1,
+                        onTap: () => setState(() => _selectedIndex == 1 ? null : _selectedIndex = 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _MobileNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MobileNavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppTheme.primary.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected
+              ? Border.all(color: AppTheme.primary.withOpacity(0.25))
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

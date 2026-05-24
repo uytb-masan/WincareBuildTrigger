@@ -5,12 +5,7 @@ enum BuildPlatform {
     repoOwner: 'tcx-wcm',
     repoName: 'Wincare.Android',
   ),
-  ios(
-    label: 'iOS',
-    icon: '🍎',
-    repoOwner: 'tcx-wcm',
-    repoName: 'Wincare.iOS',
-  );
+  ios(label: 'iOS', icon: '🍎', repoOwner: 'tcx-wcm', repoName: 'Wincare.iOS');
 
   final String label;
   final String icon;

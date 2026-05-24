@@ -30,6 +30,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final settings = Get.find<SettingsController>();
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
       color: AppTheme.background,
@@ -38,19 +39,19 @@ class _SettingsPageState extends State<SettingsPage> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(
                 bottom: BorderSide(color: AppTheme.cardBorder),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.settings_rounded,
+                const Icon(Icons.settings_rounded,
                     color: AppTheme.primary, size: 28),
-                SizedBox(width: 12),
-                Text(
+                const SizedBox(width: 12),
+                const Text(
                   'Settings',
                   style: TextStyle(
                     fontSize: 20,
@@ -58,14 +59,43 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: AppTheme.textPrimary,
                   ),
                 ),
+                const Spacer(),
+                // Connection status dot
+                Obx(() {
+                  return Tooltip(
+                    message: settings.isValid.value
+                        ? 'Connected as ${settings.userName.value}'
+                        : 'Not connected',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: settings.isValid.value
+                            ? AppTheme.success
+                            : AppTheme.error,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (settings.isValid.value
+                                    ? AppTheme.success
+                                    : AppTheme.error)
+                                .withOpacity(0.5),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
 
           // Content
+          // Content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,55 +143,106 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _tokenController,
-                          obscureText: _obscureToken,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textPrimary,
-                            fontFamily: 'monospace',
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscureToken
-                                    ? Icons.visibility_off_rounded
-                                    : Icons.visibility_rounded,
-                                size: 20,
-                                color: AppTheme.textMuted,
+                  isMobile
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextField(
+                              controller: _tokenController,
+                              obscureText: _obscureToken,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary,
+                                fontFamily: 'monospace',
                               ),
-                              onPressed: () => setState(
-                                  () => _obscureToken = !_obscureToken),
+                              decoration: InputDecoration(
+                                hintText: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureToken
+                                        ? Icons.visibility_off_rounded
+                                        : Icons.visibility_rounded,
+                                    size: 20,
+                                    color: AppTheme.textMuted,
+                                  ),
+                                  onPressed: () => setState(
+                                      () => _obscureToken = !_obscureToken),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Obx(() => ElevatedButton.icon(
-                            onPressed: settings.isValidating.value
-                                ? null
-                                : () => settings
-                                    .saveToken(_tokenController.text.trim()),
-                            icon: settings.isValidating.value
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                            const SizedBox(height: 12),
+                            Obx(() => ElevatedButton.icon(
+                                  onPressed: settings.isValidating.value
+                                      ? null
+                                      : () => settings.saveToken(
+                                          _tokenController.text.trim()),
+                                  icon: settings.isValidating.value
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(Icons.save_rounded,
+                                          size: 18),
+                                  label: Text(settings.isValidating.value
+                                      ? 'Validating...'
+                                      : 'Save & Test'),
+                                )),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _tokenController,
+                                obscureText: _obscureToken,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.textPrimary,
+                                  fontFamily: 'monospace',
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscureToken
+                                          ? Icons.visibility_off_rounded
+                                          : Icons.visibility_rounded,
+                                      size: 20,
+                                      color: AppTheme.textMuted,
                                     ),
-                                  )
-                                : const Icon(Icons.save_rounded, size: 18),
-                            label: Text(settings.isValidating.value
-                                ? 'Validating...'
-                                : 'Save & Test'),
-                          )),
-                    ],
-                  ),
+                                    onPressed: () => setState(
+                                        () => _obscureToken = !_obscureToken),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Obx(() => ElevatedButton.icon(
+                                  onPressed: settings.isValidating.value
+                                      ? null
+                                      : () => settings.saveToken(
+                                          _tokenController.text.trim()),
+                                  icon: settings.isValidating.value
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Icon(Icons.save_rounded,
+                                          size: 18),
+                                  label: Text(settings.isValidating.value
+                                      ? 'Validating...'
+                                      : 'Save & Test'),
+                                )),
+                          ],
+                        ),
 
                   // Error message
                   Obx(() {

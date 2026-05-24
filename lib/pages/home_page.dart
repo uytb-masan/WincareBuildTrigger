@@ -99,6 +99,48 @@ class _DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
+
+    if (isMobile) {
+      return DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Container(
+              color: AppTheme.surface,
+              child: const TabBar(
+                indicatorColor: AppTheme.primary,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.textSecondary,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+                tabs: [
+                  Tab(
+                    icon: Icon(Icons.build_circle_rounded, size: 20),
+                    text: 'Build Trigger',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.history_rounded, size: 20),
+                    text: 'Recent Runs',
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _BuildTriggerPanel(),
+                  _RunHistoryPanel(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Row(
       children: [
         // Left panel - Build Trigger
@@ -125,6 +167,7 @@ class _BuildTriggerPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BuildTriggerController>();
+    final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Container(
       color: AppTheme.background,
@@ -133,7 +176,7 @@ class _BuildTriggerPanel extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(
@@ -167,6 +210,35 @@ class _BuildTriggerPanel extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
+                // Connection status dot
+                Obx(() {
+                  final settings = Get.find<SettingsController>();
+                  return Tooltip(
+                    message: settings.isValid.value
+                        ? 'Connected as ${settings.userName.value}'
+                        : 'Not connected',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: settings.isValid.value
+                            ? AppTheme.success
+                            : AppTheme.error,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (settings.isValid.value
+                                    ? AppTheme.success
+                                    : AppTheme.error)
+                                .withOpacity(0.5),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -174,7 +246,7 @@ class _BuildTriggerPanel extends StatelessWidget {
           // Content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -203,12 +275,12 @@ class _BuildTriggerPanel extends StatelessWidget {
                         onChanged: controller.switchPlatform,
                       )),
 
-                  const SizedBox(height: 28),
+                  SizedBox(height: isMobile ? 18 : 28),
 
                   // Branch selector
                   const BranchDropdown(),
 
-                  const SizedBox(height: 28),
+                  SizedBox(height: isMobile ? 18 : 28),
 
                   // Flavor selector
                   Row(
@@ -236,7 +308,7 @@ class _BuildTriggerPanel extends StatelessWidget {
                         children:
                             controller.currentFlavors.entries.map((entry) {
                           return SizedBox(
-                            width: 225,
+                            width: isMobile ? double.infinity : 225,
                             child: FlavorCard(
                               flavorKey: entry.key,
                               config: entry.value,
@@ -249,7 +321,7 @@ class _BuildTriggerPanel extends StatelessWidget {
                         }).toList(),
                       )),
 
-                  const SizedBox(height: 28),
+                  SizedBox(height: isMobile ? 18 : 28),
 
                   // Release notes
                   Row(
@@ -281,7 +353,7 @@ class _BuildTriggerPanel extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  SizedBox(height: isMobile ? 22 : 32),
 
                   // Trigger button
                   Obx(() => TriggerButton(
@@ -304,6 +376,7 @@ class _RunHistoryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<RunHistoryController>();
     final buildController = Get.find<BuildTriggerController>();
+    final isMobile = MediaQuery.of(context).size.width < 900;
 
     return Container(
       color: AppTheme.background,
@@ -312,7 +385,7 @@ class _RunHistoryPanel extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(isMobile ? 16 : 24),
             decoration: const BoxDecoration(
               color: AppTheme.surface,
               border: Border(
@@ -384,6 +457,36 @@ class _RunHistoryPanel extends StatelessWidget {
                   );
                 }),
                 const SizedBox(width: 8),
+                // Connection status dot
+                Obx(() {
+                  final settings = Get.find<SettingsController>();
+                  return Tooltip(
+                    message: settings.isValid.value
+                        ? 'Connected as ${settings.userName.value}'
+                        : 'Not connected',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: settings.isValid.value
+                            ? AppTheme.success
+                            : AppTheme.error,
+                        boxShadow: [
+                          BoxShadow(
+                            color: (settings.isValid.value
+                                    ? AppTheme.success
+                                    : AppTheme.error)
+                                .withOpacity(0.5),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(width: 4),
                 // Refresh button
                 IconButton(
                   onPressed: controller.fetchRuns,
@@ -397,11 +500,12 @@ class _RunHistoryPanel extends StatelessWidget {
 
           // Filter chips
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 12),
             child: Obx(() {
               final currentFlavors = buildController.currentFlavors;
               return Wrap(
                 spacing: 8,
+                runSpacing: 8,
                 children: [
                   _FilterChip(
                     label: 'All',
@@ -446,7 +550,7 @@ class _RunHistoryPanel extends StatelessWidget {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24),
                 itemCount: runs.length,
                 itemBuilder: (context, index) {
                   return RunStatusCard(run: runs[index]);
